@@ -1,33 +1,88 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Heart, Star, Gift, Sparkles, Lock, Unlock, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Trophy, Target, Skull, AlertTriangle } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Heart, Unlock, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Skull } from 'lucide-react';
 import GameStart from '../components/GameStart';
-import DetectSystem from '../context/DetectSystem';
+
+// Define the shape of items your state will hold
+interface Item {
+  id: number;
+  x: number;
+  y: number;
+  type: string;
+  message: string;
+  emoji: string;
+}
+
+interface Obstacle {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+interface VillainConfig {
+  id: string;
+  startX: number;
+  startY: number;
+  path: string;
+  range: number;
+  speed: number;
+  emoji: string;
+}
+
+interface Level {
+  name: string;
+  theme: string;
+  difficulty: string;
+  items: Item[];
+  obstacles: Obstacle[];
+  villains: VillainConfig[];
+}
+
+type Villain = {
+  id: string;
+  x: number;
+  y: number;
+  angle: number;
+  startX: number;
+  startY: number;
+  path: string;
+  range: number;
+  speed: number;
+  emoji: string;
+};
+
+type Projectile = {
+  id: number;
+  x: number;
+  y: number;
+  angle: number;
+};
 
 export default function ValentineAdventure() {
   const [character, setCharacter] = useState({ x: 60, y: 50 });
-  const [collected, setCollected] = useState([]);
-  const [score, setScore] = useState(0);
+  const [collected, setCollected] = useState<number[]>([]);
+  const [score, setScore] = useState<number>(0);
   const [currentLevel, setCurrentLevel] = useState(0);
   const [gameStarted, setGameStarted] = useState(false);
   const [allLevelsComplete, setAllLevelsComplete] = useState(false);
-  const [showMessage, setShowMessage] = useState(null);
-  const [particles, setParticles] = useState([]);
+  const [showMessage, setShowMessage] = useState<Item | null>(null);
+  const [particles, setParticles] = useState<Projectile[]>([]);
   const [touchStart, setTouchStart] = useState({ x: 0, y: 0 });
   const [isMobile, setIsMobile] = useState(false);
   const [levelStartTime, setLevelStartTime] = useState(Date.now());
   const [timeBonus, setTimeBonus] = useState(0);
   const [lives, setLives] = useState(10);
   const [isInvincible, setIsInvincible] = useState(false);
-  const [villains, setVillains] = useState([]);
+  const [villains, setVillains] = useState<Villain[]>([]);
   const [gameOver, setGameOver] = useState(false);
-  const gameRef = useRef(null);
-  const moveIntervalRef = useRef(null);
+  const gameRef = useRef<HTMLDivElement>(null);
+  const moveIntervalRef = useRef<number | null>(null);
 
   useEffect(() => {
     setIsMobile(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent));
   }, []);
 
-  const levels = [
+  const levels: Level[] = [
     {
       name: "Rose Garden 🌹",
       theme: "from-pink-100 to-red-100",
@@ -142,7 +197,7 @@ export default function ValentineAdventure() {
       villains: [
         { id: 'v9', startX: 35, startY: 45, path: 'circle', range: 12, speed: 0.025, emoji: '😈' },
         { id: 'v10', startX: 65, startY: 45, path: 'circle', range: 12, speed: 0.025, emoji: '💀' },
-        { id: 'v11', startX: 50, y: 60, path: 'horizontal', range: 35, speed: 0.3, emoji: '👻' },
+        { id: 'v11', startX: 50, startY: 60, path: 'horizontal', range: 35, speed: 0.3, emoji: '👻' },
       ]
     },
     {
@@ -333,7 +388,7 @@ export default function ValentineAdventure() {
   useEffect(() => {
     if (!gameStarted) return;
 
-    const handleKeyPress = (e) => {
+    const handleKeyPress = (e: KeyboardEvent) => {
       if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'a', 's', 'd'].includes(e.key)) {
         e.preventDefault();
       }
@@ -345,7 +400,7 @@ export default function ValentineAdventure() {
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [gameStarted, currentLevel]);
 
-  const moveCharacter = (direction, speed = 2.5) => {
+  const moveCharacter = (direction: any, speed = 2.5) => {
     setCharacter(prev => {
       let newX = prev.x;
       let newY = prev.y;
@@ -389,12 +444,12 @@ export default function ValentineAdventure() {
     });
   };
 
-  const handleTouchStart = (e) => {
+  const handleTouchStart = (e: any) => {
     const touch = e.touches[0];
     setTouchStart({ x: touch.clientX, y: touch.clientY });
   };
 
-  const handleTouchMove = (e) => {
+  const handleTouchMove = (e: any) => {
     e.preventDefault();
     if (!touchStart.x && !touchStart.y) return;
 
@@ -425,8 +480,8 @@ export default function ValentineAdventure() {
     setTouchStart({ x: 0, y: 0 });
   };
 
-  const handleButtonPress = (direction) => {
-    moveIntervalRef.current = setInterval(() => {
+  const handleButtonPress = (direction: string) => {
+    moveIntervalRef.current = window.setInterval(() => {
       moveCharacter(direction, 2);
     }, 50);
   };
@@ -486,7 +541,7 @@ export default function ValentineAdventure() {
     }
   }, [collected, currentLevel]);
 
-  const createParticles = (x, y) => {
+  const createParticles = (x: number, y: number) => {
     const newParticles = Array.from({ length: 20 }, (_, i) => ({
       id: Date.now() + i,
       x,
@@ -511,9 +566,9 @@ export default function ValentineAdventure() {
     setGameOver(false);
     setGameStarted(true);
   };
-  if (isMobile) {
-    return <DetectSystem />
-  }
+  // if (isMobile) {
+  //   return <DetectSystem />
+  // }
   if (gameOver) {
     return (
       <div className="h-screen bg-gradient-to-br from-gray-800 via-gray-900 to-black flex items-center justify-center p-4">
@@ -887,7 +942,7 @@ export default function ValentineAdventure() {
       </div>
 
 
-      <style jsx>{`
+      <style>{`
         @keyframes float {
           0%, 100% {
             transform: translate(-50%, -50%) translateY(0);
